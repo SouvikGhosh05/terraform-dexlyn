@@ -1,0 +1,1 @@
+terraform destroy -var-file="codepipeline.tfvars" -var-file="ecs-only.tfvars"

@@ -1,0 +1,37 @@
+version: 0.2
+
+# CodeBuild Buildspec
+phases:
+  install:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 565393033010.dkr.ecr.ap-south-1.amazonaws.com
+      - echo Downloading .env file from S3...
+      - aws s3 cp s3://prod-dexlyn-env/web/.env .env  # Update to target specific S3 path
+      - aws s3 cp s3://prod-dexlyn-env/web/robots.txt robots.txt 
+
+  pre_build:
+    commands:
+      - echo "Setting IMAGE_TAG with CodeBuild build number..."
+      - export IMAGE_TAG=${CODEBUILD_BUILD_NUMBER}  # Assign build number as tag for unique image identification
+
+  build:
+    commands:
+      - echo "Build started on $(date)"
+      - docker build --build-arg PROJECTS="web" -t 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-website:${IMAGE_TAG} -f Dockerfile.web .
+
+  post_build:
+    commands:
+      - echo "Build completed on $(date)"
+      - echo "Pushing the Docker image with IMAGE_TAG to ECR..."
+      - docker push 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-website:${IMAGE_TAG}
+      - echo "Tagging the IMAGE_TAG as latest locally..."
+      - docker tag 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-website:${IMAGE_TAG} 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-website:latest
+      - echo "Pushing the latest tag to ECR..."
+      - docker push 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-website:latest
+      - echo "Creating imagedefinitions.json file..."
+      - echo '[{"name":"prod-dexlyn-web","imageUri":"565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-website:latest"}]' > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
