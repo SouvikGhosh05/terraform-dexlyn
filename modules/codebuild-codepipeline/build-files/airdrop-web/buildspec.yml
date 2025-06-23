@@ -6,7 +6,7 @@ phases:
   install:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 565393033010.dkr.ecr.ap-south-1.amazonaws.com
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 125021993355.dkr.ecr.ap-south-1.amazonaws.com
       - echo Downloading .env file from S3...
       - aws s3 cp s3://prod-dexlyn-env/airdrop-web/.env ./.env  # Replace with your actual S3 bucket name
       - aws s3 cp s3://prod-dexlyn-env/airdrop-web/robots.txt ./robots.txt
@@ -19,19 +19,19 @@ phases:
   build:
     commands:
       - echo "Build started on $(date)"
-      - docker build --build-arg PROJECTS="dexlyn-web-airdrop" -t 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-airdrop-web:${IMAGE_TAG} -f Dockerfile.web-airdrop .
+      - docker build --build-arg PROJECTS="dexlyn-web-airdrop" -t 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-airdrop-web:${IMAGE_TAG} -f Dockerfile.web-airdrop .
 
   post_build:
     commands:
       - echo "Build completed on $(date)"
       - echo "Pushing the Docker image with IMAGE_TAG to ECR..."
-      - docker push 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-airdrop-web:${IMAGE_TAG}
+      - docker push 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-airdrop-web:${IMAGE_TAG}
       - echo "Tagging the IMAGE_TAG as latest locally..."
-      - docker tag 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-airdrop-web:${IMAGE_TAG} 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-airdrop-web:latest
+      - docker tag 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-airdrop-web:${IMAGE_TAG} 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-airdrop-web:latest
       - echo "Pushing the latest tag to ECR..."
-      - docker push 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-airdrop-web:latest
+      - docker push 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-airdrop-web:latest
       - echo "Creating imagedefinitions.json file..."
-      - echo '[{"name":"prod-dexlyn-airdrop-web","imageUri":"565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-airdrop-web:latest"}]' > imagedefinitions.json
+      - echo '[{"name":"prod-dexlyn-airdrop-web","imageUri":"125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-airdrop-web:latest"}]' > imagedefinitions.json
 
 artifacts:
   files:

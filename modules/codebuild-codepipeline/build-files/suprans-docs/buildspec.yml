@@ -6,7 +6,7 @@ phases:
   install:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 565393033010.dkr.ecr.ap-south-1.amazonaws.com
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 125021993355.dkr.ecr.ap-south-1.amazonaws.com
       
   pre_build:
     commands:
@@ -16,19 +16,19 @@ phases:
   build:
     commands:
       - echo "Build started on $(date)"
-      - docker build --build-arg PROJECTS="docs" -t 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-suprans-docs:${IMAGE_TAG} -f Dockerfile.suprans-docs .
+      - docker build --build-arg PROJECTS="docs" -t 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-suprans-docs:${IMAGE_TAG} -f Dockerfile.suprans-docs .
 
   post_build:
     commands:
       - echo "Build completed on $(date)"
       - echo "Pushing the Docker image with IMAGE_TAG to ECR..."
-      - docker push 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-suprans-docs:${IMAGE_TAG}
+      - docker push 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-suprans-docs:${IMAGE_TAG}
       - echo "Tagging the IMAGE_TAG as latest locally..."
-      - docker tag 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-suprans-docs:${IMAGE_TAG} 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-suprans-docs:latest
+      - docker tag 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-suprans-docs:${IMAGE_TAG} 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-suprans-docs:latest
       - echo "Pushing the latest tag to ECR..."
-      - docker push 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-suprans-docs:latest
+      - docker push 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-suprans-docs:latest
       - echo "Creating imagedefinitions.json file..."
-      - echo '[{"name":"prod-dexlyn-suprans-docs","imageUri":"565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-suprans-docs:latest"}]' > imagedefinitions.json
+      - echo '[{"name":"prod-dexlyn-suprans-docs","imageUri":"125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-suprans-docs:latest"}]' > imagedefinitions.json
 
 artifacts:
   files:

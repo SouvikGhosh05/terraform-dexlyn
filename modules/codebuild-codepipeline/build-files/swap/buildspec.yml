@@ -4,7 +4,7 @@ phases:
   install:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 565393033010.dkr.ecr.ap-south-1.amazonaws.com
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 125021993355.dkr.ecr.ap-south-1.amazonaws.com
       - echo Downloading .env file from S3...
       - aws s3 cp s3://prod-dexlyn-env/swap/.env ./.env
 
@@ -16,19 +16,19 @@ phases:
   build:
     commands:
       - echo "Build started on $(date)"
-      - docker build --build-arg PROJECTS="swap" -t 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-swap:${IMAGE_TAG} -f Dockerfile.swap .
+      - docker build --build-arg PROJECTS="swap" -t 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-swap:${IMAGE_TAG} -f Dockerfile.swap .
 
   post_build:
     commands:
       - echo "Build completed on $(date)"
       - echo "Pushing the Docker image with IMAGE_TAG to ECR..."
-      - docker push 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-swap:${IMAGE_TAG}
+      - docker push 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-swap:${IMAGE_TAG}
       - echo "Tagging the IMAGE_TAG as latest locally..."
-      - docker tag 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-swap:${IMAGE_TAG} 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-swap:latest
+      - docker tag 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-swap:${IMAGE_TAG} 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-swap:latest
       - echo "Pushing the latest tag to ECR..."
-      - docker push 565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-swap:latest
+      - docker push 125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-swap:latest
       - echo "Creating imagedefinitions.json file..."
-      - echo '[{"name":"prod-dexlyn-swap","imageUri":"565393033010.dkr.ecr.ap-south-1.amazonaws.com/prod-dexyln-swap:latest"}]' > imagedefinitions.json
+      - echo '[{"name":"prod-dexlyn-swap","imageUri":"125021993355.dkr.ecr.ap-south-1.amazonaws.com/prod-dexlyn-swap:latest"}]' > imagedefinitions.json
 
 artifacts:
   files:
