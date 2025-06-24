@@ -79,3 +79,48 @@ output "load_balancer_listener_rules" {
     }
   }
 }
+
+# ECR Outputs
+output "ecr_repositories" {
+  description = "Map of ECR repositories information"
+  value = {
+    for key, repo in aws_ecr_repository.service_repos : key => {
+      repository_arn           = repo.arn
+      repository_name          = repo.name
+      repository_url           = repo.repository_url
+      registry_id              = repo.registry_id
+      image_tag_mutability     = repo.image_tag_mutability
+      image_scanning_enabled   = repo.image_scanning_configuration[0].scan_on_push
+      encryption_type          = repo.encryption_configuration[0].encryption_type
+    }
+  }
+}
+
+output "ecr_lifecycle_policies" {
+  description = "Map of ECR lifecycle policies information"
+  value = {
+    for key, policy in aws_ecr_lifecycle_policy.service_lifecycle : key => {
+      repository_name = policy.repository
+      policy_text     = policy.policy
+    }
+  }
+}
+
+# Combined output for easy reference
+output "ecr_repository_urls" {
+  description = "Map of ECR repository URLs for easy reference"
+  value = {
+    for key, repo in aws_ecr_repository.service_repos : key => repo.repository_url
+  }
+}
+
+output "all_resources_summary" {
+  description = "Summary of all created resources"
+  value = {
+    ecs_services_count     = length(aws_ecs_service.main)
+    target_groups_count    = length(aws_lb_target_group.main)
+    log_groups_count       = length(aws_cloudwatch_log_group.ecs_logs)
+    ecr_repositories_count = length(aws_ecr_repository.service_repos)
+    listener_rules_count   = length(aws_lb_listener_rule.main)
+  }
+}

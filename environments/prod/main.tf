@@ -7,6 +7,8 @@ module "ecs_services" {
 
   tags = {
     Environment = "prod"
+    Project     = "dexlyn"
+    ManagedBy   = "terraform"
   }
 }
 
@@ -66,6 +68,27 @@ output "load_balancer_listeners" {
 output "load_balancer_listener_rules" {
   description = "Information about created load balancer listener rules"
   value       = module.ecs_services.load_balancer_listener_rules
+}
+
+# ECR Outputs
+output "ecr_repositories" {
+  description = "Information about created ECR repositories"
+  value       = module.ecs_services.ecr_repositories
+}
+
+output "ecr_lifecycle_policies" {
+  description = "Information about ECR lifecycle policies"
+  value       = module.ecs_services.ecr_lifecycle_policies
+}
+
+output "ecr_repository_urls" {
+  description = "ECR repository URLs for easy reference"
+  value       = module.ecs_services.ecr_repository_urls
+}
+
+output "all_resources_summary" {
+  description = "Summary of all created resources"
+  value       = module.ecs_services.all_resources_summary
 }
 
 # CodeBuild & CodePipeline Outputs

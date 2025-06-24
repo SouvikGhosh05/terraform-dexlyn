@@ -1,4 +1,3 @@
-#modules/ecs-service/main.tf
 # Global variable for region
 locals {
   aws_region = "ap-south-1"
@@ -8,6 +7,74 @@ locals {
     for key, service in var.services : key => service
     if service.existing_target_group_arn == null
   }
+  
+  # Create a map of services that need ECR repositories (now defaults to all services)
+  services_needing_ecr = {
+    for key, service in var.services : key => service
+    if service.create_ecr_repository != false  # Only exclude if explicitly set to false
+  }
+}
+
+# ECR Repositories for services that require them
+resource "aws_ecr_repository" "service_repos" {
+  for_each = local.services_needing_ecr
+
+  name                 = each.value.ecr_repository_name != null ? each.value.ecr_repository_name : "${var.environment}-dexlyn-${each.value.service_name}"
+  image_tag_mutability = each.value.ecr_image_tag_mutability
+  force_delete         = each.value.ecr_force_delete
+
+  image_scanning_configuration {
+    scan_on_push = each.value.ecr_scan_on_push
+  }
+
+  encryption_configuration {
+    encryption_type = each.value.ecr_encryption_type
+    kms_key         = each.value.ecr_encryption_type == "KMS" ? each.value.ecr_kms_key : null
+  }
+
+  tags = merge(var.tags, {
+    Environment = var.environment
+    Name        = "${var.environment}-dexlyn-${each.value.service_name}-ecr"
+    Service     = each.value.service_name
+  })
+}
+
+# ECR Lifecycle Policies for repositories
+resource "aws_ecr_lifecycle_policy" "service_lifecycle" {
+  for_each = local.services_needing_ecr
+
+  repository = aws_ecr_repository.service_repos[each.key].name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep last ${each.value.ecr_lifecycle_policy.max_image_count} tagged images"
+        selection = {
+          tagStatus     = "tagged"
+          tagPrefixList = each.value.ecr_lifecycle_policy.tagged_prefixes
+          countType     = "imageCountMoreThan"
+          countNumber   = each.value.ecr_lifecycle_policy.max_image_count
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 2
+        description  = "Remove untagged images older than ${each.value.ecr_lifecycle_policy.max_image_age_days} days"
+        selection = {
+          tagStatus   = "untagged"
+          countType   = "sinceImagePushed"
+          countUnit   = "days"
+          countNumber = each.value.ecr_lifecycle_policy.max_image_age_days
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
 }
 
 # CloudWatch Log Groups for each service
@@ -17,10 +84,11 @@ resource "aws_cloudwatch_log_group" "ecs_logs" {
   name              = "/ecs/${var.environment}-dexlyn-${each.value.service_name}"
   retention_in_days = each.value.log_retention_days
 
-  tags = {
+  tags = merge(var.tags, {
     Environment = var.environment
     Name        = "${var.environment}-dexlyn-${each.value.service_name}"
-  }
+    Service     = each.value.service_name
+  })
 }
 
 # Target Groups for services that don't have existing target groups
@@ -35,10 +103,23 @@ resource "aws_lb_target_group" "main" {
   vpc_id      = var.vpc_id
   target_type = "ip"
 
-  tags = {
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 30
+    path                = "/"
+    matcher             = "200"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+  }
+
+  tags = merge(var.tags, {
     Environment = var.environment
     Name        = "${var.environment}-dexlyn-${each.value.service_name}"
-  }
+    Service     = each.value.service_name
+  })
 }
 
 # Data source to get existing target groups (for manually created ones)
@@ -67,7 +148,7 @@ resource "aws_lb_listener_rule" "main" {
   priority     = each.value.listener_rule_priority
 
   action {
-    type = "forward"
+    type             = "forward"
     target_group_arn = each.value.existing_target_group_arn != null ? each.value.existing_target_group_arn : aws_lb_target_group.main[each.key].arn
   }
 
@@ -77,10 +158,11 @@ resource "aws_lb_listener_rule" "main" {
     }
   }
 
-  tags = {
+  tags = merge(var.tags, {
     Environment = var.environment
     Name        = "${var.environment}-dexlyn-${each.value.service_name}"
-  }
+    Service     = each.value.service_name
+  })
 }
 
 # ECS Task Definitions for each service
@@ -133,6 +215,15 @@ resource "aws_ecs_task_definition" "main" {
         }
       }
 
+      # # Health check configuration
+      # healthCheck = {
+      #   command     = ["CMD-SHELL", "curl -f http://localhost:${each.value.container_port}/ || exit 1"]
+      #   interval    = 30
+      #   timeout     = 5
+      #   retries     = 3
+      #   startPeriod = 60
+      # }
+
       # Required empty arrays for ECS container definition
       mountPoints    = []
       volumesFrom    = []
@@ -141,10 +232,11 @@ resource "aws_ecs_task_definition" "main" {
     }
   ])
 
-  tags = {
+  tags = merge(var.tags, {
     Environment = var.environment
     Name        = "${var.environment}-dexlyn-${each.value.service_name}"
-  }
+    Service     = each.value.service_name
+  })
 }
 
 # ECS Services for each service
@@ -174,15 +266,17 @@ resource "aws_ecs_service" "main" {
 
   enable_execute_command = false
 
-  tags = {
+  tags = merge(var.tags, {
     Environment = var.environment
     Name        = "${var.environment}-dexlyn-${each.value.service_name}"
-  }
+    Service     = each.value.service_name
+  })
 
   # Ensure dependencies are created before services
   depends_on = [
     aws_cloudwatch_log_group.ecs_logs,
     aws_lb_target_group.main,
-    aws_lb_listener_rule.main
+    aws_lb_listener_rule.main,
+    aws_ecr_repository.service_repos
   ]
 }

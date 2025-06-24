@@ -9,14 +9,14 @@ terraform {
   }
 
   backend "s3" {
-    bucket  = "dexlyn-terraform-tfstate-bucket"
+    bucket  = "dexlyn-terraform-tfstate-s3"
     key     = "terraform_state_files/dexlyn-prod/prod-souvik-terraform.tfstate"
     region  = "ap-south-1"
-    profile = "wdcs-dexlyn"
+    profile = "souvik-admin-dexlyn"
   }
 }
 
 provider "aws" {
   region  = var.aws_region
-  profile = "wdcs-dexlyn"
+  profile = "souvik-admin-dexlyn"
 }

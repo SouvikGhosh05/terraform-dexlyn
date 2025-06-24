@@ -34,6 +34,20 @@ variable "services" {
     
     # Optional existing target group (for manual creation of long names)
     existing_target_group_arn  = optional(string, null)   # If provided, will use existing target group instead of creating new one
+    
+    # ECR Configuration (always creates ECR repo by default)
+    create_ecr_repository      = optional(bool, true)     # Whether to create ECR repository for this service
+    ecr_repository_name        = optional(string, null)   # Custom ECR repo name (defaults to service name if not specified)
+    ecr_force_delete           = optional(bool, false)    # Force delete ECR repo even if it contains images
+    ecr_image_tag_mutability   = optional(string, "MUTABLE") # MUTABLE or IMMUTABLE
+    ecr_scan_on_push           = optional(bool, true)     # Enable vulnerability scanning on push
+    ecr_encryption_type        = optional(string, "AES256") # AES256 or KMS
+    ecr_kms_key                = optional(string, null)   # KMS key ARN for encryption (if encryption_type is KMS)
+    ecr_lifecycle_policy       = optional(object({
+      max_image_count          = optional(number, 100)    # Maximum number of images to keep
+      max_image_age_days       = optional(number, 30)     # Maximum age of untagged images in days
+      tagged_prefixes          = optional(list(string), ["v", "release"]) # Keep images with these tag prefixes
+    }), {})
   }))
 }
 
