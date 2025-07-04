@@ -1,3 +1,5 @@
+# modules/ecs-service/main.tf
+
 # Global variable for region
 locals {
   aws_region = "ap-south-1"
@@ -185,7 +187,8 @@ resource "aws_ecs_task_definition" "main" {
   container_definitions = jsonencode([
     {
       name      = "${var.environment}-dexlyn-${each.value.service_name}"
-      image     = each.value.container_image
+      # Use dynamically created ECR repository URL with latest tag
+      image     = "${aws_ecr_repository.service_repos[each.key].repository_url}:latest"
       cpu       = each.value.cpu
       memory    = each.value.memory
       essential = true
@@ -214,15 +217,6 @@ resource "aws_ecs_task_definition" "main" {
           "awslogs-stream-prefix" = "ecs"
         }
       }
-
-      # # Health check configuration
-      # healthCheck = {
-      #   command     = ["CMD-SHELL", "curl -f http://localhost:${each.value.container_port}/ || exit 1"]
-      #   interval    = 30
-      #   timeout     = 5
-      #   retries     = 3
-      #   startPeriod = 60
-      # }
 
       # Required empty arrays for ECS container definition
       mountPoints    = []

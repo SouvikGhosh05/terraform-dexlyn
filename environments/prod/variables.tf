@@ -1,26 +1,19 @@
 # environments/prod/variables.tf
+
 variable "aws_region" {
   description = "AWS region"
   type        = string
   default     = "ap-south-1"
 }
 
-variable "vpc_id" {
-  description = "VPC ID for resources"
-  type        = string
-}
+# Note: VPC configuration is now hardcoded in main.tf for Mumbai production
+# ECS Cluster 'prod-dexlyn-cluster' will be created only if it doesn't exist
 
-# ECS Variables with per-service load balancer configuration
+# ECS Variables - Simplified since VPC resources and container images are managed dynamically
 variable "ecs_services" {
   description = "Map of ECS services configuration"
   type = map(object({
     service_name                = string
-    existing_cluster_arn        = string
-    existing_subnet_ids         = list(string)
-    existing_security_group_id  = string
-    existing_execution_role_arn = string  # ecsTaskExecutionRole
-    existing_task_role_arn      = string  # ecsTaskExecutionRole (same as execution)
-    container_image             = string
     container_port              = number
     desired_count               = number
     cpu                         = number
@@ -31,7 +24,6 @@ variable "ecs_services" {
     environment_variables       = optional(map(string), {})  # Optional - can contain APP_TO_RUN and others
     
     # Per-service load balancer configuration
-    load_balancer_arn          = string   # ARN of the load balancer for this service
     listener_port              = optional(number, 80)     # Port for the listener (default 80)
     listener_protocol          = optional(string, "HTTP") # Protocol for the listener (default HTTP)
     
@@ -63,12 +55,6 @@ variable "codeconnection_arn" {
 variable "codepipeline_artifact_bucket" {
   description = "S3 bucket name for CodePipeline artifacts"
   type        = string
-}
-
-variable "default_ecs_cluster_arn" {
-  description = "Default ECS cluster ARN for deployments"
-  type        = string
-  default     = "arn:aws:ecs:ap-south-1:125021993355:cluster/prod-dexlyn-cluster"
 }
 
 # Separate IAM Roles for CodeBuild and CodePipeline
@@ -150,7 +136,7 @@ variable "codepipeline_services" {
     
     # Deploy Configuration
     ecs_service_name  = string           # ECS service name to deploy to
-    ecs_cluster_arn   = optional(string, null)  # Override default cluster if needed
+    ecs_cluster_arn   = optional(string, null)  # Override default cluster if needed (will use VPC module cluster by default)
   }))
   default = {}
 }

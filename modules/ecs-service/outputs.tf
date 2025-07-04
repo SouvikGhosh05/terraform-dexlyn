@@ -1,3 +1,5 @@
+# modules/ecs-service/outputs.tf
+
 output "services" {
   description = "Map of ECS services information"
   value = {
